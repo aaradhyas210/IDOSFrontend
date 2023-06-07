@@ -7,7 +7,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { COLORS, FONT } from "../../../style/Style";
 
-const EditablePdfElement = ({ sectionData }) => {
+const EditablePdfElement = ({ sectionData, pdfData }) => {
 	const [description, setDescription] = useState(
 		sectionData?.sectionDescription?.[0]
 	);
@@ -28,6 +28,9 @@ const EditablePdfElement = ({ sectionData }) => {
 				</IconButtons>
 			</ControlSection>
 			<EditingSection>
+				<Title>
+					{sectionData?.sectionId} {sectionData?.sectionHeading}
+				</Title>
 				<RichTextEditor
 					theme="snow"
 					value={description}
@@ -78,6 +81,15 @@ const EditingSection = styled("div")({
 	flexDirection: "column",
 	justifyContent: "center",
 	alignItems: "center",
+});
+
+const Title = styled("div")({
+	fontSize: FONT.headerText,
+	color: COLORS.black,
+	width: "100%",
+	fontWeight: 600,
+	textTransform: "uppercase",
+	marginBottom: "20px",
 });
 
 const RichTextEditor = styled(ReactQuill)({

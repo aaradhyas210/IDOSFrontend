@@ -6,7 +6,10 @@ import data from "../../data.json";
 import DialogPopup from "./components/DialogPopup";
 
 const PdfGeneration = () => {
+	const [pdfData, setPdfData] = useState(null);
+	const [approvedPdfData, setApprovedPdfData] = useState(null);
 	const [selectedSection, setSelectedSection] = useState();
+	const [loadingPdfData, setLoadingPdfData] = useState(false);
 	const [openUploadPopup, setOpenUploadPopup] = useState(false);
 
 	const HandleCloseUploadPopup = () => setOpenUploadPopup(false);
@@ -18,13 +21,35 @@ const PdfGeneration = () => {
 		return `${20 * multiplier}px`;
 	};
 
-	const ChangeSeclectedSection = (pdfData) => {
-		setSelectedSection({ ...pdfData });
+	const ChangeSeclectedSection = (selectionData) => {
+		setSelectedSection({ ...selectionData });
 	};
 
 	useEffect(() => {
 		setSelectedSection(data?.pdfData?.[0]);
 	}, []);
+
+	const GetPdfData = async (tocFile) => {
+		setLoadingPdfData(true);
+		let formData = new FormData();
+		formData.append("file", tocFile);
+		fetch("https://idos-backend.azurewebsites.net/upload", {
+			method: "POST",
+			body: formData,
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				console.log(data);
+				setLoadingPdfData(false);
+				HandleCloseUploadPopup();
+				// setPdfData(data);
+				// setApprovedPdfData(data);
+			})
+			.catch((err) => {
+				console.log(err);
+				setLoadingPdfData(false);
+			});
+	};
 
 	return (
 		<PageWrapper>
@@ -54,6 +79,8 @@ const PdfGeneration = () => {
 			<DialogPopup
 				HandleClose={HandleCloseUploadPopup}
 				open={openUploadPopup}
+				UploadFile={GetPdfData}
+				loading={loadingPdfData}
 			/>
 		</PageWrapper>
 	);
@@ -89,7 +116,7 @@ const CustomButton = styled(Button)({
 
 const DisplaySection = styled("section")({
 	width: "100%",
-	maxHeight: "82dvh",
+	height: "82dvh",
 	display: "flex",
 });
 

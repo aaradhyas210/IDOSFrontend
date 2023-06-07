@@ -1,12 +1,19 @@
-import { Button, Dialog, IconButton, styled } from "@mui/material";
+import {
+	Button,
+	CircularProgress,
+	Dialog,
+	IconButton,
+	styled,
+} from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { COLORS, FONT } from "../../../style/Style";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DescriptionIcon from "@mui/icons-material/Description";
 
-const DialogPopup = ({ HandleClose, open }) => {
+const DialogPopup = ({ HandleClose, open, UploadFile, loading }) => {
 	const [file, setFile] = useState(null);
+	const [loader, setLoader] = useState(loading);
 	const drop = useRef(null);
 
 	const BrowseFile = () => {
@@ -16,6 +23,10 @@ const DialogPopup = ({ HandleClose, open }) => {
 	const SelectFile = (e) => {
 		setFile(e.target.files[0]);
 	};
+
+	useEffect(() => {
+		setLoader(loading);
+	}, [loading]);
 
 	useEffect(() => {
 		drop?.current?.addEventListener("dragover", HandleDragOver);
@@ -38,6 +49,12 @@ const DialogPopup = ({ HandleClose, open }) => {
 		e.preventDefault();
 		e.stopPropagation();
 		setFile(e.dataTransfer.files[0]);
+	};
+
+	const UploadHandler = () => {
+		if (file) {
+			UploadFile(file);
+		}
 	};
 
 	return (
@@ -70,7 +87,15 @@ const DialogPopup = ({ HandleClose, open }) => {
 									</UploadText>
 								</RowFlexContainer>
 							</PreviewContainer>
-							<UploadButton>Upload File</UploadButton>
+							<UploadContextContainer>
+								{loader ? (
+									<CircularProgress style={{ color: COLORS.primary }} />
+								) : (
+									<UploadButton onClick={UploadHandler}>
+										Upload File
+									</UploadButton>
+								)}
+							</UploadContextContainer>
 						</>
 					)}
 				</UploadContainer>
@@ -152,11 +177,18 @@ const RowFlexContainer = styled("div")({
 	alignItems: "center",
 });
 
+const UploadContextContainer = styled("div")({
+	marginTop: "20px",
+	display: "flex",
+	height: "30px",
+	justifyContent: "center",
+	alignItems: "center",
+});
+
 const UploadButton = styled(Button)({
 	backgroundColor: COLORS.primary,
 	color: COLORS.white,
 	padding: "5px 20px",
-	marginTop: "20px",
 	borderRadius: "20px",
 	fontSize: FONT.buttonFont,
 	"&:hover": {
