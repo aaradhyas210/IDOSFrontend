@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, styled } from "@mui/material";
+import { Button, CircularProgress, styled } from "@mui/material";
 import { COLORS, FONT } from "../../style/Style";
 import * as xlsx from "xlsx";
 import Header from "../Header/Header";
@@ -15,6 +15,7 @@ const PdfGeneration = () => {
 	const [loadingPdfData, setLoadingPdfData] = useState(false);
 	const [openUploadPopup, setOpenUploadPopup] = useState(false);
 	const [tabSelected, setTabSelected] = useState(0);
+	const [loadingOverlay, setLoadingOverlay] = useState(false);
 
 	const HandleCloseUploadPopup = () => setOpenUploadPopup(false);
 
@@ -65,6 +66,13 @@ const PdfGeneration = () => {
 		setTabSelected(tab);
 	};
 
+	const GetGenerativeAnswer = () => {
+		setLoadingOverlay(true);
+		setTimeout(() => {
+			setLoadingOverlay(false);
+		}, 5000);
+	};
+
 	return (
 		<PageWrapper>
 			<Header />
@@ -113,9 +121,15 @@ const PdfGeneration = () => {
 											Final Draft
 										</TabElement>
 									</TabContainer>
+									{loadingOverlay && (
+										<LoadingOverlay>
+											<CircularProgress style={{ color: COLORS.primary }} />
+										</LoadingOverlay>
+									)}
 									<EditablePdfElement
 										sectionData={selectedSection}
 										selectedSectionKey={selectedSectionKey}
+										GetGenerativeAnswer={GetGenerativeAnswer}
 									/>
 								</>
 							)}
@@ -241,6 +255,19 @@ const TabElement = styled("div")({
 		backgroundColor: `${COLORS.secondary} !important`,
 		color: COLORS.black,
 	},
+});
+
+const LoadingOverlay = styled("div")({
+	position: "absolute",
+	top: 0,
+	left: 0,
+	right: 0,
+	bottom: 0,
+	backgroundColor: "rgba(0,0,0,0.4)",
+	display: "flex",
+	justifyContent: "center",
+	alignItems: "center",
+	zIndex: 10,
 });
 
 const CloseTabButton = styled(HighlightOffIcon)({

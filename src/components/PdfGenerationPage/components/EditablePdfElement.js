@@ -7,7 +7,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { COLORS, FONT } from "../../../style/Style";
 
-const EditablePdfElement = ({ sectionData, pdfData }) => {
+const EditablePdfElement = ({ sectionData, pdfData, GetGenerativeAnswer }) => {
 	const [description, setDescription] = useState(
 		sectionData?.sectionDescription?.[0]
 	);
@@ -45,7 +45,7 @@ const EditablePdfElement = ({ sectionData, pdfData }) => {
 					<PromptField
 						placeholder="Add prompt to change the contents of this field..."
 						endAdornment={
-							<IconButton>
+							<IconButton onClick={GetGenerativeAnswer}>
 								<SendIcon />
 							</IconButton>
 						}
