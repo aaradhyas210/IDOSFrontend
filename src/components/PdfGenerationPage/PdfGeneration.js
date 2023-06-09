@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Button, styled } from "@mui/material";
 import { COLORS, FONT } from "../../style/Style";
+import * as xlsx from "xlsx";
 import Header from "../Header/Header";
-import EditablePdfElement from "./components/EditablePdfElement";
-import data from "../../data.json";
+import EmptyIcon from "../../assets/box.png";
 import DialogPopup from "./components/DialogPopup";
+import EditablePdfElement from "./components/EditablePdfElement";
 
 const PdfGeneration = () => {
 	const [pdfData, setPdfData] = useState(null);
-	const [approvedPdfData, setApprovedPdfData] = useState(null);
 	const [selectedSection, setSelectedSection] = useState(null);
 	const [selectedSectionKey, setSelectedSectionKey] = useState(0);
 	const [loadingPdfData, setLoadingPdfData] = useState(false);
@@ -28,40 +28,35 @@ const PdfGeneration = () => {
 		setSelectedSectionKey(key);
 	};
 
-	useEffect(() => {
-		//remove when we get data
-		setPdfData(data.pdfData);
-		setSelectedSection(data?.pdfData?.[0]);
-		MakeDeepCopyApprovedPdfData(data);
-	}, []);
-
 	const GetPdfData = async (tocFile) => {
 		setLoadingPdfData(true);
-		let formData = new FormData();
-		formData.append("file", tocFile);
-		fetch("https://idos-backend.azurewebsites.net/upload", {
-			method: "POST",
-			body: formData,
-		})
-			.then((res) => res.json())
-			.then((resData) => {
-				console.log(resData);
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const data = e.target.result;
+			const workbook = xlsx.read(data, { type: "array" });
+			const sheetName = workbook.SheetNames[0];
+			const worksheet = workbook.Sheets[sheetName];
+			const json = xlsx.utils.sheet_to_json(worksheet);
+			let toc_Creation = [];
+			json.forEach((element) => {
+				if (Object.keys(element).includes("__EMPTY"))
+					if (Object.values(element).length === 2) {
+						let toc_element = {
+							sectionId: String(Object.values(element)[0]),
+							sectionHeading: Object.values(element)[1],
+							sectionDescription: [],
+							finalSectionDescription: "",
+						};
+						toc_Creation.push(toc_element);
+					}
+			});
+			setTimeout(() => {
+				setPdfData(toc_Creation);
 				setLoadingPdfData(false);
 				HandleCloseUploadPopup();
-				// setPdfData(data);
-				// setSelectedSection(data?.pdfData?.[0])
-				// MakeDeepCopyApprovedPdfData(data);
-			})
-			.catch((err) => {
-				console.log(err);
-				setLoadingPdfData(false);
-			});
-	};
-
-	const MakeDeepCopyApprovedPdfData = (pdfData_tobecopied) => {
-		let deep_copy = JSON.parse(JSON.stringify(pdfData_tobecopied));
-		deep_copy?.pdfData?.forEach((element) => (element.approved = false));
-		setApprovedPdfData({ ...deep_copy });
+			}, 3000);
+		};
+		reader.readAsArrayBuffer(tocFile);
 	};
 
 	return (
@@ -89,11 +84,23 @@ const PdfGeneration = () => {
 							</TableOfContent>
 						</TableOfContentSection>
 						<PdfElementSection>
-							<EditablePdfElement sectionData={selectedSection} />
+							{selectedSection && (
+								<EditablePdfElement
+									sectionData={selectedSection}
+									selectedSectionKey={selectedSectionKey}
+								/>
+							)}
 						</PdfElementSection>
 					</>
 				) : (
-					<NoPdf></NoPdf>
+					<NoPdf>
+						<NoPdfImage
+							src={EmptyIcon}
+							alt="Empty Icon"
+							about="No File has been uploaded"
+							title="No File has been uploaded"
+						/>
+					</NoPdf>
 				)}
 			</DisplaySection>
 			<DialogPopup

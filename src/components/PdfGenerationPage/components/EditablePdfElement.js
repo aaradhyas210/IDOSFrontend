@@ -41,9 +41,9 @@ const EditablePdfElement = ({ sectionData, pdfData }) => {
 						backgroundColor: editable ? COLORS.white : "rgba(255,255,255,0.5)",
 					}}
 				/>
-				{editable && (
+				{!editable && (
 					<PromptField
-						placeholder="Add prompt to edit this field..."
+						placeholder="Add prompt to change the contents of this field..."
 						endAdornment={
 							<IconButton>
 								<SendIcon />
@@ -118,6 +118,12 @@ const PromptField = styled(OutlinedInput)({
 	borderRadius: "5px",
 	border: "1px solid #D4D4D4",
 	backgroundColor: COLORS.white,
+	"& input::placeholder": {
+		fontStyle: "italic",
+	},
+	"& .MuiOutlinedInput-notchedOutline": {
+		// border: "none",
+	},
 });
 
 export default EditablePdfElement;
