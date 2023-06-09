@@ -14,6 +14,7 @@ const PdfGeneration = () => {
 	const [selectedSectionKey, setSelectedSectionKey] = useState(0);
 	const [loadingPdfData, setLoadingPdfData] = useState(false);
 	const [openUploadPopup, setOpenUploadPopup] = useState(false);
+	const [tabSelected, setTabSelected] = useState(0);
 
 	const HandleCloseUploadPopup = () => setOpenUploadPopup(false);
 
@@ -60,6 +61,10 @@ const PdfGeneration = () => {
 		reader.readAsArrayBuffer(tocFile);
 	};
 
+	const ChangeTab = (tab) => {
+		setTabSelected(tab);
+	};
+
 	return (
 		<PageWrapper>
 			<Header />
@@ -88,13 +93,25 @@ const PdfGeneration = () => {
 							{selectedSection && (
 								<>
 									<TabContainer>
-										<TabElement className="selected">
-											Draft 1<CloseTabButton />
+										<TabElement
+											onClick={() => ChangeTab(0)}
+											className={tabSelected === 0 ? "selected" : ""}
+											value={0}>
+											Draft 1
+											<CloseTabButton />
 										</TabElement>
-										<TabElement>
+										<TabElement
+											onClick={() => ChangeTab(1)}
+											className={tabSelected === 1 ? "selected" : ""}
+											value={1}>
 											Draft 2<CloseTabButton />
 										</TabElement>
-										<TabElement>Final Draft</TabElement>
+										<TabElement
+											onClick={() => ChangeTab(2)}
+											className={tabSelected === 2 ? "selected" : ""}
+											value={2}>
+											Final Draft
+										</TabElement>
 									</TabContainer>
 									<EditablePdfElement
 										sectionData={selectedSection}
