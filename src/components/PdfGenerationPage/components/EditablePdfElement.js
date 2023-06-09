@@ -19,14 +19,14 @@ const EditablePdfElement = ({ sectionData, pdfData }) => {
 
 	return (
 		<ElementWrapper>
-			<ControlSection>
+			{/* <ControlSection>
 				<IconButtons onClick={() => setEditable(false)} disabled={!editable}>
 					<DoneIcon style={{ color: "green" }} />
 				</IconButtons>
 				<IconButtons onClick={() => setEditable(true)} disabled={editable}>
 					<EditNoteIcon />
 				</IconButtons>
-			</ControlSection>
+			</ControlSection> */}
 			<EditingSection>
 				<Title>
 					{sectionData?.sectionId} {sectionData?.sectionHeading}
@@ -57,9 +57,11 @@ const EditablePdfElement = ({ sectionData, pdfData }) => {
 };
 
 const ElementWrapper = styled("div")({
-	width: "100%",
+	width: "85%",
+	height: "100%",
 	display: "flex",
 	alignItems: "center",
+	justifyContent: "center",
 	gap: "30px",
 });
 

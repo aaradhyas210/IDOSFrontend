@@ -6,6 +6,7 @@ import Header from "../Header/Header";
 import EmptyIcon from "../../assets/box.png";
 import DialogPopup from "./components/DialogPopup";
 import EditablePdfElement from "./components/EditablePdfElement";
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 
 const PdfGeneration = () => {
 	const [pdfData, setPdfData] = useState(null);
@@ -50,11 +51,11 @@ const PdfGeneration = () => {
 						toc_Creation.push(toc_element);
 					}
 			});
-			setTimeout(() => {
-				setPdfData(toc_Creation);
-				setLoadingPdfData(false);
-				HandleCloseUploadPopup();
-			}, 3000);
+			// setTimeout(() => {
+			setPdfData(toc_Creation);
+			setLoadingPdfData(false);
+			HandleCloseUploadPopup();
+			// }, 3000);
 		};
 		reader.readAsArrayBuffer(tocFile);
 	};
@@ -85,10 +86,21 @@ const PdfGeneration = () => {
 						</TableOfContentSection>
 						<PdfElementSection>
 							{selectedSection && (
-								<EditablePdfElement
-									sectionData={selectedSection}
-									selectedSectionKey={selectedSectionKey}
-								/>
+								<>
+									<TabContainer>
+										<TabElement className="selected">
+											Draft 1<CloseTabButton />
+										</TabElement>
+										<TabElement>
+											Draft 2<CloseTabButton />
+										</TabElement>
+										<TabElement>Final Draft</TabElement>
+									</TabContainer>
+									<EditablePdfElement
+										sectionData={selectedSection}
+										selectedSectionKey={selectedSectionKey}
+									/>
+								</>
 							)}
 						</PdfElementSection>
 					</>
@@ -174,13 +186,52 @@ const TableOfContentValue = styled("div")({
 
 const PdfElementSection = styled("div")({
 	width: "80%",
-	backgroundColor: COLORS.secondary,
-	padding: "40px 30px",
+	position: "relative",
 	display: "flex",
 	justifyContent: "center",
 	alignItems: "center",
-	overflowY: "auto",
+	backgroundColor: COLORS.secondary,
 	boxShadow: "inset 3px 3px 7px 4px #ccc",
+});
+
+const TabContainer = styled("div")({
+	position: "absolute",
+	top: 0,
+	left: 0,
+	right: 0,
+	display: "flex",
+});
+
+const TabElement = styled("div")({
+	width: "150px",
+	display: "flex",
+	justifyContent: "center",
+	alignItems: "center",
+	textAlign: "center",
+	padding: "10px 5px",
+	borderBottomLeftRadius: "20px",
+	borderBottomRightRadius: "20px",
+	backgroundColor: COLORS.primary,
+	color: COLORS.white,
+	position: "relative",
+	marginRight: "2px",
+	cursor: "pointer",
+	"&:hover": {
+		backgroundColor: COLORS.white,
+		color: COLORS.primary,
+	},
+	"&.selected": {
+		backgroundColor: `${COLORS.secondary} !important`,
+		color: COLORS.black,
+	},
+});
+
+const CloseTabButton = styled(HighlightOffIcon)({
+	cursor: "pointer",
+	position: "absolute",
+	right: 10,
+	color: "inherit",
+	fontSize: "18px",
 });
 
 const NoPdf = styled("div")({
