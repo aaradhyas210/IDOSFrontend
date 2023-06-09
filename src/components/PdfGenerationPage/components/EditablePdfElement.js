@@ -97,14 +97,18 @@ const RichTextEditor = styled(ReactQuill)({
 	minHeight: "300px",
 	maxHeight: "500px",
 	boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-	overflowY: "auto",
 	borderRadius: "5px",
 	"& .ql-toolbar.ql-snow": {
 		backgroundColor: "rgba(0,0,0,0.3)",
 	},
 	"& .ql-container.ql-snow": {
 		minHeight: "300px",
-		maxHeight: "500px",
+		maxHeight: "400px",
+		border: "none",
+		overflowY: "auto",
+	},
+	"& .ql-editor": {
+		fontSize: FONT.subHeading,
 	},
 });
 

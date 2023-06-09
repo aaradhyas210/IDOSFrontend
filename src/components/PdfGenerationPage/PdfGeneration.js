@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, styled } from "@mui/material";
 import { COLORS, FONT } from "../../style/Style";
+import Header from "../Header/Header";
 import EditablePdfElement from "./components/EditablePdfElement";
 import data from "../../data.json";
 import DialogPopup from "./components/DialogPopup";
@@ -8,7 +9,8 @@ import DialogPopup from "./components/DialogPopup";
 const PdfGeneration = () => {
 	const [pdfData, setPdfData] = useState(null);
 	const [approvedPdfData, setApprovedPdfData] = useState(null);
-	const [selectedSection, setSelectedSection] = useState();
+	const [selectedSection, setSelectedSection] = useState(null);
+	const [selectedSectionKey, setSelectedSectionKey] = useState(0);
 	const [loadingPdfData, setLoadingPdfData] = useState(false);
 	const [openUploadPopup, setOpenUploadPopup] = useState(false);
 
@@ -21,12 +23,16 @@ const PdfGeneration = () => {
 		return `${20 * multiplier}px`;
 	};
 
-	const ChangeSeclectedSection = (selectionData) => {
+	const ChangeSeclectedSection = (selectionData, key) => {
 		setSelectedSection({ ...selectionData });
+		setSelectedSectionKey(key);
 	};
 
 	useEffect(() => {
+		//remove when we get data
+		setPdfData(data.pdfData);
 		setSelectedSection(data?.pdfData?.[0]);
+		MakeDeepCopyApprovedPdfData(data);
 	}, []);
 
 	const GetPdfData = async (tocFile) => {
@@ -38,12 +44,13 @@ const PdfGeneration = () => {
 			body: formData,
 		})
 			.then((res) => res.json())
-			.then((data) => {
-				console.log(data);
+			.then((resData) => {
+				console.log(resData);
 				setLoadingPdfData(false);
 				HandleCloseUploadPopup();
 				// setPdfData(data);
-				// setApprovedPdfData(data);
+				// setSelectedSection(data?.pdfData?.[0])
+				// MakeDeepCopyApprovedPdfData(data);
 			})
 			.catch((err) => {
 				console.log(err);
@@ -51,30 +58,43 @@ const PdfGeneration = () => {
 			});
 	};
 
+	const MakeDeepCopyApprovedPdfData = (pdfData_tobecopied) => {
+		let deep_copy = JSON.parse(JSON.stringify(pdfData_tobecopied));
+		deep_copy?.pdfData?.forEach((element) => (element.approved = false));
+		setApprovedPdfData({ ...deep_copy });
+	};
+
 	return (
 		<PageWrapper>
+			<Header />
 			<ButtonSection>
 				<CustomButton onClick={() => setOpenUploadPopup(true)}>
 					Upload TOC
 				</CustomButton>
-				<CustomButton>Generate PDF</CustomButton>
+				<CustomButton>Download as PDF</CustomButton>
 			</ButtonSection>
 			<DisplaySection>
-				<TableOfContentSection>
-					<TableOfContent>
-						{data.pdfData.map((item, key) => (
-							<TableOfContentValue
-								key={key}
-								onClick={() => ChangeSeclectedSection(item)}
-								style={{ marginLeft: GetSpacing(item.sectionId) }}>
-								{item.sectionId} {item.sectionHeading}
-							</TableOfContentValue>
-						))}
-					</TableOfContent>
-				</TableOfContentSection>
-				<PdfElementSection>
-					<EditablePdfElement sectionData={selectedSection} />
-				</PdfElementSection>
+				{pdfData ? (
+					<>
+						<TableOfContentSection>
+							<TableOfContent>
+								{pdfData?.map((item, key) => (
+									<TableOfContentValue
+										key={key}
+										onClick={() => ChangeSeclectedSection(item, key)}
+										style={{ marginLeft: GetSpacing(item.sectionId) }}>
+										{item.sectionId} {item.sectionHeading}
+									</TableOfContentValue>
+								))}
+							</TableOfContent>
+						</TableOfContentSection>
+						<PdfElementSection>
+							<EditablePdfElement sectionData={selectedSection} />
+						</PdfElementSection>
+					</>
+				) : (
+					<NoPdf></NoPdf>
+				)}
 			</DisplaySection>
 			<DialogPopup
 				HandleClose={HandleCloseUploadPopup}
@@ -86,7 +106,12 @@ const PdfGeneration = () => {
 	);
 };
 
-const PageWrapper = styled("div")({});
+const PageWrapper = styled("div")({
+	display: "flex",
+	flexDirection: "column",
+	height: "100vh",
+	overflow: "hidden",
+});
 
 const ButtonSection = styled("section")({
 	display: "flex",
@@ -116,13 +141,16 @@ const CustomButton = styled(Button)({
 
 const DisplaySection = styled("section")({
 	width: "100%",
-	height: "82dvh",
+	flexGrow: 1,
 	display: "flex",
+	overflow: "hidden",
 });
 
 const TableOfContentSection = styled("div")({
-	width: "20%",
-	padding: "50px",
+	width: "25%",
+	paddingTop: "50px",
+	paddingLeft: "40px",
+	paddingBottom: "20px",
 	overflowY: "auto",
 });
 
@@ -147,5 +175,16 @@ const PdfElementSection = styled("div")({
 	overflowY: "auto",
 	boxShadow: "inset 3px 3px 7px 4px #ccc",
 });
+
+const NoPdf = styled("div")({
+	width: "100%",
+	height: "100%",
+	display: "flex",
+	flexDirection: "column",
+	alignItems: "center",
+	justifyContent: "center",
+});
+
+const NoPdfImage = styled("img")({});
 
 export default PdfGeneration;
