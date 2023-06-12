@@ -7,14 +7,16 @@ import EmptyIcon from "../../assets/box.png";
 import DialogPopup from "./components/DialogPopup";
 import EditablePdfElement from "./components/EditablePdfElement";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import CancelIcon from "@mui/icons-material/Cancel";
+import axios from "axios";
 
 const PdfGeneration = () => {
 	const [pdfData, setPdfData] = useState(null);
-	const [selectedSection, setSelectedSection] = useState(null);
-	const [selectedSectionKey, setSelectedSectionKey] = useState(0);
+	const [pdfHeadings, setPdfHeadings] = useState(null);
+	const [selectedSectionKey, setSelectedSectionKey] = useState(null);
 	const [loadingPdfData, setLoadingPdfData] = useState(false);
 	const [openUploadPopup, setOpenUploadPopup] = useState(false);
-	const [tabSelected, setTabSelected] = useState(0);
+	const [tabSelected, setTabSelected] = useState(null);
 	const [loadingOverlay, setLoadingOverlay] = useState(false);
 
 	const HandleCloseUploadPopup = () => setOpenUploadPopup(false);
@@ -27,8 +29,13 @@ const PdfGeneration = () => {
 	};
 
 	const ChangeSeclectedSection = (selectionData, key) => {
-		setSelectedSection({ ...selectionData });
 		setSelectedSectionKey(key);
+		setTabSelected(0);
+		if (
+			selectionData?.sectionDescription?.[0] === "" ||
+			selectionData?.sectionDescription?.[0] === undefined
+		)
+			GetGenerativeAnswer(selectionData?.sectionId, "", key, false);
 	};
 
 	const GetPdfData = async (tocFile) => {
@@ -41,6 +48,7 @@ const PdfGeneration = () => {
 			const worksheet = workbook.Sheets[sheetName];
 			const json = xlsx.utils.sheet_to_json(worksheet);
 			let toc_Creation = [];
+			let toc_headings = {};
 			json.forEach((element) => {
 				if (Object.keys(element).includes("__EMPTY"))
 					if (Object.values(element).length === 2) {
@@ -51,9 +59,12 @@ const PdfGeneration = () => {
 							finalSectionDescription: "",
 						};
 						toc_Creation.push(toc_element);
+						toc_headings[`${String(Object.values(element)[0])}`] =
+							Object.values(element)[1];
 					}
 			});
 			// setTimeout(() => {
+			setPdfHeadings(toc_headings);
 			setPdfData(toc_Creation);
 			setLoadingPdfData(false);
 			HandleCloseUploadPopup();
@@ -66,11 +77,41 @@ const PdfGeneration = () => {
 		setTabSelected(tab);
 	};
 
-	const GetGenerativeAnswer = () => {
+	const GetGenerativeAnswer = async (sectionId, prompt, key, changeTab) => {
 		setLoadingOverlay(true);
-		setTimeout(() => {
+		let headings = await GetHeadings(sectionId);
+		let payload = {
+			heading: headings?.heading !== undefined ? headings?.heading : "",
+			subheading:
+				headings?.subHeading !== undefined ? headings?.subHeading : "",
+			topic: headings?.topic !== undefined ? headings?.topic : "",
+			prompt: prompt ? prompt : "",
+		};
+		try {
+			const response = await axios.post(
+				"https://idos-backend.azurewebsites.net/get_content",
+				payload
+			);
+			const data = response?.data;
+			let pdf_data = [...pdfData];
+			pdf_data?.[`${key}`]?.sectionDescription.push(data);
+			setPdfData(pdf_data);
+			if (changeTab) setTabSelected((curr) => curr + 1);
 			setLoadingOverlay(false);
-		}, 5000);
+		} catch (err) {
+			console.error(err);
+			setLoadingOverlay(false);
+		}
+	};
+
+	const GetHeadings = async (curr_id) => {
+		let head_levels = curr_id?.split(".");
+		let topic = pdfHeadings?.[`${curr_id}`];
+		head_levels?.pop();
+		let subHeading = pdfHeadings?.[`${head_levels.join(".")}`];
+		head_levels?.pop();
+		let heading = pdfHeadings?.[`${head_levels}`];
+		return { topic: topic, subHeading: subHeading, heading: heading };
 	};
 
 	return (
@@ -98,26 +139,23 @@ const PdfGeneration = () => {
 							</TableOfContent>
 						</TableOfContentSection>
 						<PdfElementSection>
-							{selectedSection && (
+							{selectedSectionKey !== null && (
 								<>
 									<TabContainer>
+										{pdfData?.[
+											`${selectedSectionKey}`
+										]?.sectionDescription?.map((description, key) => (
+											<TabElement
+												key={key}
+												onClick={() => ChangeTab(key)}
+												className={tabSelected === key ? "selected" : ""}>
+												Draft {key + 1}
+												<CloseTabButton />
+											</TabElement>
+										))}
 										<TabElement
-											onClick={() => ChangeTab(0)}
-											className={tabSelected === 0 ? "selected" : ""}
-											value={0}>
-											Draft 1
-											<CloseTabButton />
-										</TabElement>
-										<TabElement
-											onClick={() => ChangeTab(1)}
-											className={tabSelected === 1 ? "selected" : ""}
-											value={1}>
-											Draft 2<CloseTabButton />
-										</TabElement>
-										<TabElement
-											onClick={() => ChangeTab(2)}
-											className={tabSelected === 2 ? "selected" : ""}
-											value={2}>
+											onClick={() => ChangeTab("Final")}
+											className={tabSelected === "Final" ? "selected" : ""}>
 											Final Draft
 										</TabElement>
 									</TabContainer>
@@ -127,9 +165,12 @@ const PdfGeneration = () => {
 										</LoadingOverlay>
 									)}
 									<EditablePdfElement
-										sectionData={selectedSection}
 										selectedSectionKey={selectedSectionKey}
 										GetGenerativeAnswer={GetGenerativeAnswer}
+										tabSelected={tabSelected}
+										pdfData={pdfData}
+										setPdfData={setPdfData}
+										setTabSelected={setTabSelected}
 									/>
 								</>
 							)}
@@ -239,9 +280,9 @@ const TabElement = styled("div")({
 	justifyContent: "center",
 	alignItems: "center",
 	textAlign: "center",
-	padding: "10px 5px",
-	borderBottomLeftRadius: "20px",
-	borderBottomRightRadius: "20px",
+	padding: "5px 5px",
+	borderBottomLeftRadius: "10px",
+	borderBottomRightRadius: "10px",
 	backgroundColor: COLORS.primary,
 	color: COLORS.white,
 	position: "relative",
@@ -270,12 +311,16 @@ const LoadingOverlay = styled("div")({
 	zIndex: 10,
 });
 
-const CloseTabButton = styled(HighlightOffIcon)({
+const CloseTabButton = styled(CancelIcon)({
 	cursor: "pointer",
 	position: "absolute",
 	right: 10,
 	color: "inherit",
-	fontSize: "18px",
+	fontSize: "15px",
+	"&:hover": {
+		fontSize: "17px",
+		opacity: 0.5,
+	},
 });
 
 const NoPdf = styled("div")({

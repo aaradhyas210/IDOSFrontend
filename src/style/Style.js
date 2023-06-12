@@ -13,4 +13,5 @@ export const FONT = {
 	subHeading: "16px",
 	smallText: "12px",
 	buttonFont: "15px",
+	smallButton: "12px",
 };
